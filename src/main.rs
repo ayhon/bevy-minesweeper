@@ -8,6 +8,9 @@ mod minesweeper_model;
 #[derive(Component)]
 struct MineCell(usize, usize);
 
+#[derive(Resource)]
+struct Board<const H: usize, const W: usize>(minesweeper_model::Minesweeper<H, W>);
+
 fn main() {
     let mut app = App::new();
     app.add_plugins(DefaultPlugins);
@@ -17,6 +20,7 @@ fn main() {
     app.add_plugin(WorldInspectorPlugin::new());
     // .add_system(print_mouse_events_system)
     app.add_startup_system(setup);
+    app.insert_resource(Board(minesweeper_model::random_grid::<20,20>(20.0)));
     app.run();
 }
 

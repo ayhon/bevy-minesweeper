@@ -16,10 +16,10 @@ pub fn default_game() -> Minesweeper<{GRID_SIZE.0},{GRID_SIZE.1}> {
     Minesweeper { grid }
 }
 
-pub fn random_grid(bomb_p : f32) -> Minesweeper<{GRID_SIZE.0},{GRID_SIZE.1}> {
-    let mut grid : [[bool; GRID_SIZE.0]; GRID_SIZE.1] = Default::default();
-    for i in 0..GRID_SIZE.0 {
-        for j in 0..GRID_SIZE.1 {
+pub fn random_grid<const W: usize, const H: usize>(bomb_p : f32) -> Minesweeper<W,H> {
+    let mut grid = [[false; W]; H];
+    for i in 0..W {
+        for j in 0..H {
             let f : f32 = random();
             grid[i][j] = f < bomb_p;
         }
