@@ -6,6 +6,7 @@ pub const GRID_SIZE: (usize, usize) = (20,20);
 type Point = (usize, usize);
 
 // grid : NxM array of cells? could be booleans, representing bomb or not bomb
+#[derive(Debug)]
 pub struct Minesweeper<const W: usize, const H: usize> {
     grid: [[bool; W]; H]
 }
@@ -40,21 +41,27 @@ impl<const W: usize,const H: usize> Minesweeper<W, H> {
 
     // Get neighbours count : takes a grid, and an index (i,j) and returns the amount of adjacent bombs
     pub fn neighbours_count(&self, p: Point) -> u8 {
-        let mut count : u8 = 0;
+        self.neighbours(p)
+            .into_iter()
+            .map(|p| if self.is_bomb(&p) { 1 } else { 0 })
+            .sum()
+    }
+
+    pub fn neighbours(&self, p: Point) -> Vec<Point> {
+        let mut res = vec![];
         for i in -1..=1 {
             for j in -1..=1 {
-                if i != 0 && j != 0 {
+                if (i,j) != (0,0) {
                     let (x,y) = p;
                     let neighbour = ((x as i8 + i) as usize,(y as i8 + j) as usize);
-                    if self.is_bomb(&neighbour) {
-                        count += 1;
+                    if self.is_in_grid(&neighbour){
+                        res.push(neighbour);
                     }
                 }
             }
         }
-        count
+        return res;
     }
-    
 }
 
 
