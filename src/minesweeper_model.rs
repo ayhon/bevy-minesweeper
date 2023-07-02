@@ -61,6 +61,7 @@ impl<const W: usize,const H: usize> Minesweeper<W, H> {
 /*
   Game unfolding : 
   first, we instantiate a grid, and randomly scatter bombs around the map
+  precompute the number of neighbouring bombs for each bombs
   set player visibility to empty set
   then, we enter a loop : 
     wait for the user to click on a cell
