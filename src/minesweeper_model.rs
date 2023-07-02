@@ -56,3 +56,22 @@ impl<const W: usize,const H: usize> Minesweeper<W, H> {
     }
     
 }
+
+
+/*
+  Game unfolding : 
+  first, we instantiate a grid, and randomly scatter bombs around the map
+  set player visibility to empty set
+  then, we enter a loop : 
+    wait for the user to click on a cell
+    when it does, find out which, and:
+        if it's a bomb, end the game with LOSE flag, set visibility to all
+        if it's not:
+            if it's the first turn, set visibility to some complex pattern (I don't know how it works?)
+            it it's not, make pressed cell visible, with it's neighbour count
+            if every non-bomb cell has been revealed, end game with WIN flag
+    end game:
+        show WIN or LOSE depending on the flag
+
+    
+ */

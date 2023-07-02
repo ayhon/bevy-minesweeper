@@ -33,7 +33,7 @@ pub fn setup(mut commands: Commands) {
         for y in 0..minesweeper_model::GRID_SIZE.0 {
             let size = Vec2::new(CELL_WIDTH,CELL_HEIGHT);
             let pos =  ((x as f32)*CELL_WIDTH, (y as f32)*CELL_HEIGHT);
-            commands.spawn(
+            let entitity = commands.spawn(
                 (
                     MineCell(x,y),
                     SpriteBundle {
@@ -57,7 +57,6 @@ fn handle_mouse_clicks(mouse_input: Res<Input<MouseButton>>, windows_query: Quer
         println!("click at {:?}", win.cursor_position());
     }
 }
-
 
 #[warn(dead_code)]
 fn print_mouse_events_system(
