@@ -29,24 +29,28 @@ struct MainCamera;
 
 fn main() {
     let mut app = App::new();
-    app.add_plugins(DefaultPlugins);
-    app.add_system(my_cursor_system);
+    app.add_plugins(DefaultPlugins.set(
+        // This sets image filtering to nearest
+        // This is done to prevent textures with low resolution (e.g. pixel art) from being blurred
+        // by linear filtering.
+        ImagePlugin::default_nearest(),
+    ));
+    app.add_systems(Update, handle_cell_click);
     #[cfg(feature = "debug")]
     // Debug hierarchy inspector
     app.add_plugin(WorldInspectorPlugin::new());
     // .add_system(print_mouse_events_system)
-    app.add_startup_system(setup);
+    app.add_systems(Startup, setup);
     app.insert_resource(Board(minesweeper_model::random_grid::<20,20>(0.20)));
     app.insert_resource(MapBecauseWeReLazy(HashMap::new()));
     app.insert_resource(WeLost::No);
-    app.add_system(show_cells);
-    app.add_system(my_cursor_system);
-    app.add_system(reveal_zeros_neighbours);
-    app.add_system(reveal_when_lost);
+    app.add_systems(Update, show_cells);
+    app.add_systems(Update, reveal_zeros_neighbours);
+    app.add_systems(Update, reveal_when_lost);
     app.run();
 }
 
-const CELL_WIDTH: f32 = 20f32;
+const CELL_WIDTH: f32 = 48f32;
 const CELL_HEIGHT: f32 = CELL_WIDTH;
 const CELL_SIZE: Vec2 = Vec2::new(CELL_WIDTH,CELL_HEIGHT);
 
@@ -80,8 +84,8 @@ fn setup(
     println!("{:?}", board.0);
 }
 
-
-fn handle_mouse_clicks(
+#[cfg(feature = "debug")]
+fn debug_print_cursor_window_coordinates(
     mouse_input: Res<Input<MouseButton>>,
     windows_query: Query<&Window>
 ) {
@@ -91,31 +95,7 @@ fn handle_mouse_clicks(
     }
 }
 
-#[warn(dead_code)]
-fn print_mouse_events_system(
-    mut mouse_button_input_events: EventReader<MouseButtonInput>,
-    mut mouse_motion_events: EventReader<MouseMotion>,
-    mut cursor_moved_events: EventReader<CursorMoved>,
-    mut mouse_wheel_events: EventReader<MouseWheel>,
-) {
-    for event in mouse_button_input_events.iter() {
-        info!("{:?}", event);
-    }
-
-    for event in mouse_motion_events.iter() {
-        info!("{:?}", event);
-    }
-
-    for event in cursor_moved_events.iter() {
-        info!("{:?}", event);
-    }
-
-    for event in mouse_wheel_events.iter() {
-        info!("{:?}", event);
-    }
-}
-
-fn my_cursor_system (
+fn handle_cell_click (
     mut commands: Commands,
     mut map: ResMut<MapBecauseWeReLazy>,
     // need to get window dimensions
@@ -202,13 +182,34 @@ fn show_cells(
     mut commands: Commands,
     cells: Query<(Entity,&MineCell)>,
     board: Res<Board<20,20>>,
+    asset_server: Res<AssetServer>,
 ){
     for (entity, &MineCell{x,y,hidden}) in cells.into_iter(){
         if !hidden {
             if board.0.is_bomb(&(x,y)) {
+                commands.entity(entity).insert(asset_server.load::<Image,&str>("minesprites/boom.png"));
                 commands.entity(entity).insert(Sprite { color: Color::RED, custom_size: Some(CELL_SIZE), ..Default::default()});
             } else {
-                commands.entity(entity).insert(Sprite { color: Color::GREEN, custom_size: Some(CELL_SIZE), ..Default::default()});
+                let neigh_count = board.0.neighbours_count((x,y));
+                if neigh_count == 0 {
+                    commands.entity(entity).remove::<SpriteBundle>();
+                } else {
+                    let color = match neigh_count {
+                        1 => Color::GREEN,
+                        2 => Color::YELLOW,
+                        3 => Color::ORANGE,
+                        4 => Color::RED,
+                        5 => Color::PINK,
+                        6 => Color::FUCHSIA,
+                        7 => Color::PURPLE,
+                        8 => Color::BLACK,
+                        _ => panic!("Something wrong happened here, got {}", neigh_count),
+                    };
+                    commands.entity(entity).insert(Sprite { color: color, custom_size: Some(CELL_SIZE), ..Default::default()});
+                    commands.entity(entity).insert(asset_server.load::<Image,&str>(
+                        &format!("minesprites/{}.png", neigh_count)[..]
+                    ));
+                }
             }
         }
     }
