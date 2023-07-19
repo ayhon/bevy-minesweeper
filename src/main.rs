@@ -13,6 +13,9 @@ struct MineCell{
     hidden: bool,
 }
 
+#[derive(Component)]
+struct Flagged;
+
 #[derive(Resource)]
 pub struct Board<const H: usize, const W: usize>(minesweeper_model::Minesweeper<H, W>);
 
@@ -121,7 +124,7 @@ fn handle_cell_click (
     .map(|ray| ray.origin.truncate())
     {
         let cursor = (world_position.x, world_position.y);
-        if mouse_input.just_pressed(MouseButton::Left){
+        if mouse_input.just_pressed(MouseButton::Left) || mouse_input.just_pressed(MouseButton::Right){
             // eprintln!("World coords: ({},{})", world_position.x, world_position.y);
             for (entity, transform, &MineCell{x,y,..}) in cells.into_iter() {
                 let cell = {
@@ -129,9 +132,13 @@ fn handle_cell_click (
                     (x,y)
                 };
                 if (cell.0 - cursor.0).abs() <= CELL_WIDTH/2.0 && (cell.1 - cursor.1).abs() <= CELL_HEIGHT/2.0 {
-                    commands.entity(entity).insert(MineCell{x,y, hidden: false});
-                    if board.0.is_bomb(&(x,y)){
-                        *we_lost = WeLost::Yes;
+                    if mouse_input.just_pressed(MouseButton::Left) {
+                        commands.entity(entity).insert(MineCell{x,y, hidden: false});
+                        if board.0.is_bomb(&(x,y)){
+                            *we_lost = WeLost::Yes;
+                        }
+                    } else if mouse_input.just_pressed(MouseButton::Right) {
+                        commands.entity(entity).insert(Sprite { color: Color::ORANGE, custom_size: Some(CELL_SIZE), ..Default::default()});
                     }
                 }
             }
